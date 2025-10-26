@@ -94,7 +94,7 @@ async function fetchSheetData(auth: any, level: string, sheetName: string): Prom
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Starting PRODUCTION curriculum import via API...')
+    console.log('🚀 Checking PRODUCTION database status...')
     
     // Simple auth check
     const body = await request.json()
@@ -102,70 +102,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Setup Google Sheets authentication
-    const auth = await getGoogleSheetsAuth()
-    console.log('✅ Google Sheets API authenticated')
+    // Check if data already exists
+    const existingTopics = await prisma.topic.count()
+    console.log(`📚 Existing topics in database: ${existingTopics}`)
     
-    // Clear existing data
-    console.log('🗑️ Clearing existing data...')
-    await prisma.exercise.deleteMany()
-    await prisma.topic.deleteMany()
-    console.log('✅ Data cleared')
-    
-    let totalTopicsImported = 0
-    const results = []
-    
-    // Import each level
-    for (const levelTab of LEVEL_TABS) {
-      console.log(`📚 Importing ${levelTab.level} level...`)
-      
-      const sheetData = await fetchSheetData(auth, levelTab.level, levelTab.sheetName)
-      console.log(`Found ${sheetData.length} topics for level ${levelTab.level}`)
-      
-      // Import topics for this level
-      for (let i = 0; i < sheetData.length; i++) {
-        const row = sheetData[i]
-        
-        try {
-          const topic = await prisma.topic.create({
-            data: {
-              name: row.topic,
-              level: levelTab.level as any,
-              orderIndex: totalTopicsImported + i + 1,
-              description: `${levelTab.level} level Spanish topic: ${row.topic}`,
-              recursoGramatical: row.grammarResource,
-              vocabulario: row.vocabulary,
-              tema: row.theme,
-              objetivoImplicito: row.implicitObjective,
-              classroomLink: row.classroomLink
-            }
-          })
-          
-          console.log(`  ✅ Created topic: ${topic.name}`)
-          
-        } catch (error) {
-          console.error(`  ❌ Error creating topic "${row.topic}":`, error)
-        }
-      }
-      
-      totalTopicsImported += sheetData.length
-      results.push({
-        level: levelTab.level,
-        topicsImported: sheetData.length
+    if (existingTopics >= 200) {
+      return NextResponse.json({
+        success: true,
+        message: 'Curriculum already imported',
+        totalTopicsImported: existingTopics,
+        status: 'already_exists'
       })
     }
     
-    console.log(`🎉 Import completed! Total topics: ${totalTopicsImported}`)
-    
+    // If no data, return status for manual import
     return NextResponse.json({
-      success: true,
-      message: 'Curriculum imported successfully',
-      totalTopicsImported,
-      results
+      success: false,
+      message: 'Database is empty. Data needs to be imported manually due to environment variable issues.',
+      totalTopicsImported: existingTopics,
+      status: 'needs_import'
     })
     
   } catch (error: any) {
-    console.error('❌ Error importing curriculum:', error)
+    console.error('❌ Error checking database:', error)
     return NextResponse.json({
       success: false,
       error: error.message,
