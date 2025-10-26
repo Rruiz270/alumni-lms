@@ -190,7 +190,10 @@ export default function TeacherDashboard() {
               <p className="text-blue-700 mb-4">
                 Programa y gestiona las clases en vivo para tus estudiantes
               </p>
-              <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700">
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                onClick={() => window.location.href = '/teacher/schedule'}
+              >
                 Abrir Calendario
               </Button>
             </CardContent>
@@ -207,7 +210,11 @@ export default function TeacherDashboard() {
               <p className="text-green-700 mb-4">
                 Revisa el progreso y asigna tareas a tus estudiantes
               </p>
-              <Button variant="outline" className="w-full border-green-300 text-green-700 hover:bg-green-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                onClick={() => alert('Gestión de estudiantes próximamente')}
+              >
                 Ver Estudiantes
               </Button>
             </CardContent>
@@ -224,7 +231,11 @@ export default function TeacherDashboard() {
               <p className="text-purple-700 mb-4">
                 Crea y gestiona contenido educativo para las clases
               </p>
-              <Button variant="outline" className="w-full border-purple-300 text-purple-700 hover:bg-purple-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                onClick={() => alert('Gestión de material didáctico próximamente')}
+              >
                 Gestionar Material
               </Button>
             </CardContent>
@@ -257,8 +268,20 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Ver Detalles</Button>
-                  <Button size="sm" className="bg-blue-600 text-white">Unirse</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => alert('Ver detalles de la clase')}
+                  >
+                    Ver Detalles
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="bg-blue-600 text-white"
+                    onClick={() => alert('Abriendo Google Meet...')}
+                  >
+                    Unirse
+                  </Button>
                 </div>
               </div>
               
@@ -273,8 +296,20 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Ver Detalles</Button>
-                  <Button size="sm" className="bg-green-600 text-white">Preparar</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => alert('Ver detalles de la clase')}
+                  >
+                    Ver Detalles
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 text-white"
+                    onClick={() => alert('Preparando materiales de clase...')}
+                  >
+                    Preparar
+                  </Button>
                 </div>
               </div>
             </div>

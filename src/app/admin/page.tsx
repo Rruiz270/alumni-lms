@@ -195,7 +195,10 @@ export default function AdminDashboard() {
               <p className="text-purple-700 mb-4">
                 Administra estudiantes, profesores y permisos del sistema
               </p>
-              <Button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700">
+              <Button 
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                onClick={() => alert('Gestión de usuarios próximamente')}
+              >
                 Gestionar Usuarios
               </Button>
             </CardContent>
@@ -212,7 +215,11 @@ export default function AdminDashboard() {
               <p className="text-blue-700 mb-4">
                 Administra el contenido educativo y estructura de cursos
               </p>
-              <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                onClick={() => alert('Gestión de contenido próximamente')}
+              >
                 Gestionar Contenido
               </Button>
             </CardContent>
@@ -229,7 +236,11 @@ export default function AdminDashboard() {
               <p className="text-emerald-700 mb-4">
                 Analiza métricas de uso, progreso y rendimiento
               </p>
-              <Button variant="outline" className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                onClick={() => alert('Reportes y analytics próximamente')}
+              >
                 Ver Reportes
               </Button>
             </CardContent>
@@ -333,15 +344,27 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-12 flex items-center gap-3 border-gray-300">
+              <Button 
+                variant="outline" 
+                className="h-12 flex items-center gap-3 border-gray-300"
+                onClick={() => alert('Configuración de roles próximamente')}
+              >
                 <Users className="h-4 w-4" />
                 Configurar Roles
               </Button>
-              <Button variant="outline" className="h-12 flex items-center gap-3 border-gray-300">
+              <Button 
+                variant="outline" 
+                className="h-12 flex items-center gap-3 border-gray-300"
+                onClick={() => alert('Configuración de API próximamente')}
+              >
                 <Globe className="h-4 w-4" />
                 Configurar API
               </Button>
-              <Button variant="outline" className="h-12 flex items-center gap-3 border-gray-300">
+              <Button 
+                variant="outline" 
+                className="h-12 flex items-center gap-3 border-gray-300"
+                onClick={() => alert('Backup de datos próximamente')}
+              >
                 <Database className="h-4 w-4" />
                 Backup de Datos
               </Button>

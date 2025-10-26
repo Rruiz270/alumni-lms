@@ -189,7 +189,10 @@ export default function SimpleStudentDashboard() {
               <p className="text-orange-700 mb-4">
                 Programa tu próxima clase en vivo con nuestros profesores nativos
               </p>
-              <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700">
+              <Button 
+                className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700"
+                onClick={() => window.location.href = '/student/book-class'}
+              >
                 Agendar Ahora
               </Button>
             </CardContent>
@@ -206,7 +209,11 @@ export default function SimpleStudentDashboard() {
               <p className="text-blue-700 mb-4">
                 Accede a actividades pre-clase y post-clase para reforzar tu aprendizaje
               </p>
-              <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                onClick={() => window.location.href = '/student/study'}
+              >
                 Comenzar a Estudiar
               </Button>
             </CardContent>
@@ -223,7 +230,11 @@ export default function SimpleStudentDashboard() {
               <p className="text-green-700 mb-4">
                 Revisa tu progreso y logros en el aprendizaje del español
               </p>
-              <Button variant="outline" className="w-full border-green-300 text-green-700 hover:bg-green-50">
+              <Button 
+                variant="outline" 
+                className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                onClick={() => window.location.href = '/student/progress'}
+              >
                 Ver Progreso
               </Button>
             </CardContent>
@@ -247,9 +258,9 @@ export default function SimpleStudentDashboard() {
             <SpanishLevelTabs
               topics={topics}
               currentUserLevel="A1"
-              onStartLesson={(topicId) => console.log('Start lesson:', topicId)}
+              onStartLesson={(topicId) => window.location.href = '/student/study'}
               onViewClassroom={(link) => window.open(link, '_blank')}
-              onBookClass={(topicId) => console.log('Book class:', topicId)}
+              onBookClass={(topicId) => window.location.href = '/student/book-class'}
             />
           </CardContent>
         </Card>
