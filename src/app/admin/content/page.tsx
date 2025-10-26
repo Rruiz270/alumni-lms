@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { 
   BookOpen, 
   FileText, 
-  PresentationChart,
+  Presentation,
   Plus,
   Edit,
   Trash2,
@@ -240,7 +240,7 @@ export default function ContentManagement() {
                 </Card>
                 <Card>
                   <CardContent className="flex items-center p-4">
-                    <PresentationChart className="h-8 w-8 text-purple-600" />
+                    <Presentation className="h-8 w-8 text-purple-600" />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-gray-600">Slides</p>
                       <p className="text-2xl font-bold text-gray-900">{overview.overview.slidesCount}</p>
@@ -431,7 +431,7 @@ export default function ContentManagement() {
                               {topic._count.exercises} exercises
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-600">
-                              <PresentationChart className="h-4 w-4" />
+                              <Presentation className="h-4 w-4" />
                               {topic._count.liveClassSlides} slides
                             </div>
                             <div className="flex items-center gap-1 text-sm text-gray-600">
