@@ -75,7 +75,7 @@ export default function SimpleStudentDashboard() {
                   ¡Bienvenido a Alumni by Better!
                 </h1>
                 <p className="text-gray-600">
-                  Tu plataforma de aprendizaje de español - Academia Alumni
+                  Tu plataforma de aprendizaje de español - Academia Alumni (Actualizado)
                 </p>
               </div>
             </div>
