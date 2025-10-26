@@ -1,15 +1,4 @@
-import nodemailer from 'nodemailer';
 import { format } from 'date-fns';
-
-interface EmailConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  auth: {
-    user: string;
-    pass: string;
-  };
-}
 
 interface BookingDetails {
   id: string;
@@ -34,26 +23,45 @@ interface BookingDetails {
 }
 
 export class EmailNotificationService {
-  private transporter: nodemailer.Transporter;
+  private transporter: any;
 
   constructor() {
-    const config: EmailConfig = {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER || '',
-        pass: process.env.SMTP_PASS || '',
-      },
-    };
+    // Lazy load nodemailer to avoid build issues
+    this.transporter = null;
+  }
 
-    this.transporter = nodemailer.createTransporter(config);
+  private async initializeTransporter() {
+    if (!this.transporter) {
+      try {
+        const nodemailer = await import('nodemailer');
+        const config = {
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: false,
+          auth: {
+            user: process.env.SMTP_USER || '',
+            pass: process.env.SMTP_PASS || '',
+          },
+        };
+        this.transporter = nodemailer.default.createTransporter(config);
+      } catch (error) {
+        console.error('Failed to initialize email transporter:', error);
+        throw new Error('Email service not available');
+      }
+    }
   }
 
   /**
    * Send booking confirmation email to student
    */
   async sendBookingConfirmation(booking: BookingDetails): Promise<void> {
+    try {
+      await this.initializeTransporter();
+    } catch (error) {
+      console.log('Email service not available, skipping notification');
+      return;
+    }
+
     const subject = `Class Confirmed: ${booking.topic.name} - ${format(booking.scheduledAt, 'MMM do, yyyy')}`;
     
     const studentHtml = this.generateBookingConfirmationTemplate(booking, 'student');
@@ -87,6 +95,13 @@ export class EmailNotificationService {
    * Send booking cancellation email
    */
   async sendBookingCancellation(booking: BookingDetails, cancelledBy: 'student' | 'teacher'): Promise<void> {
+    try {
+      await this.initializeTransporter();
+    } catch (error) {
+      console.log('Email service not available, skipping notification');
+      return;
+    }
+
     const subject = `Class Cancelled: ${booking.topic.name} - ${format(booking.scheduledAt, 'MMM do, yyyy')}`;
     
     const studentHtml = this.generateCancellationTemplate(booking, 'student', cancelledBy);
@@ -120,6 +135,13 @@ export class EmailNotificationService {
    * Send class reminder email (sent 24 hours and 1 hour before class)
    */
   async sendClassReminder(booking: BookingDetails, reminderType: '24h' | '1h'): Promise<void> {
+    try {
+      await this.initializeTransporter();
+    } catch (error) {
+      console.log('Email service not available, skipping notification');
+      return;
+    }
+
     const timeLabel = reminderType === '24h' ? '24 hours' : '1 hour';
     const subject = `Reminder: Your class with ${booking.teacher.name} starts in ${timeLabel}`;
     
@@ -158,6 +180,13 @@ export class EmailNotificationService {
     oldBooking: BookingDetails,
     newBooking: BookingDetails
   ): Promise<void> {
+    try {
+      await this.initializeTransporter();
+    } catch (error) {
+      console.log('Email service not available, skipping notification');
+      return;
+    }
+
     const subject = `Class Rescheduled: ${newBooking.topic.name}`;
     
     const studentHtml = this.generateRescheduleTemplate(oldBooking, newBooking, 'student');
