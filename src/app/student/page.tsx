@@ -1,12 +1,9 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import SpanishLevelTabs from '@/components/spanish/SpanishLevelTabs'
 import { 
   Calendar, 
   BookOpen, 
@@ -28,88 +25,38 @@ interface SpanishTopic {
   objetivoImplicito?: string
   classroomLink?: string
   orderIndex: number
-  progress?: {
-    preClassComplete: boolean
-    liveClassAttended: boolean
-    afterClassComplete: boolean
-  }
 }
 
-export default function StudentDashboard() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [packageInfo, setPackageInfo] = useState<any>(null)
+export default function SimpleStudentDashboard() {
   const [topics, setTopics] = useState<SpanishTopic[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (session?.user?.role !== 'STUDENT') {
-      router.push('/dashboard')
-    }
-  }, [status, session, router])
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchTopics = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://alumni-backend-production-2546.up.railway.app'
+        const response = await fetch(`${apiUrl}/api/topics`)
         
-        // For now, let's fetch topics and create mock package data
-        const topicsResponse = await fetch(`${apiUrl}/api/topics`)
-
-        if (topicsResponse.ok) {
-          const topicsData = await topicsResponse.json()
-          setTopics(topicsData || [])
+        if (response.ok) {
+          const data = await response.json()
+          setTopics(data || [])
         }
-
-        // Mock package data for now
-        setPackageInfo({
-          totalLessons: 80,
-          usedLessons: 12,
-          remainingLessons: 68,
-          validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-        })
       } catch (error) {
-        console.error('Error fetching dashboard data:', error)
-        // Set empty data on error
-        setTopics([])
-        setPackageInfo({
-          totalLessons: 80,
-          usedLessons: 0,
-          remainingLessons: 80,
-          validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-        })
+        console.error('Error fetching topics:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchDashboardData()
+    fetchTopics()
   }, [])
 
-  const handleStartLesson = (topicId: string) => {
-    router.push(`/student/learning/${topicId}`)
-  }
-
-  const handleViewClassroom = (link: string) => {
-    window.open(link, '_blank')
-  }
-
-  const handleBookClass = (topicId: string) => {
-    router.push(`/student/book?topic=${topicId}`)
-  }
-
-  if (status === 'loading' || loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Cargando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
+        <div className="text-lg">Cargando Alumni by Better...</div>
       </div>
     )
-  }
-
-  if (!session?.user || session.user.role !== 'STUDENT') {
-    return null
   }
 
   return (
@@ -123,10 +70,10 @@ export default function StudentDashboard() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                ¡Bienvenido, {session.user.name}!
+                ¡Bienvenido a Alumni by Better!
               </h1>
               <p className="text-gray-600">
-                Continúa tu viaje de aprendizaje del español
+                Tu plataforma de aprendizaje de español
               </p>
             </div>
           </div>
@@ -138,7 +85,7 @@ export default function StudentDashboard() {
                 <span className="font-medium text-gray-700">Nivel Actual:</span>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge className="bg-orange-100 text-orange-800">
-                    Español {session?.user?.level || 'A1'}
+                    Español A1
                   </Badge>
                   <Star className="h-4 w-4 text-orange-500" />
                 </div>
@@ -146,15 +93,13 @@ export default function StudentDashboard() {
               <div>
                 <span className="font-medium text-gray-700">Progreso del Curso:</span>
                 <p className="text-gray-900 mt-1">
-                  {packageInfo?.usedLessons || 0} de {packageInfo?.totalLessons || 80} lecciones
+                  12 de 80 lecciones completadas
                 </p>
               </div>
               <div>
-                <span className="font-medium text-gray-700">Vigencia del Contrato:</span>
+                <span className="font-medium text-gray-700">Temas Disponibles:</span>
                 <p className="text-gray-900 mt-1">
-                  {packageInfo?.validUntil 
-                    ? new Date(packageInfo.validUntil).toLocaleDateString('es-ES') 
-                    : 'No disponible'}
+                  {topics.length} temas de español
                 </p>
               </div>
             </div>
@@ -168,9 +113,7 @@ export default function StudentDashboard() {
               <Clock className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Lecciones Restantes</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {packageInfo?.remainingLessons || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">68</p>
               </div>
             </CardContent>
           </Card>
@@ -180,9 +123,7 @@ export default function StudentDashboard() {
               <BookOpen className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Nivel Actual</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {session?.user?.level || 'A1'}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">A1</p>
               </div>
             </CardContent>
           </Card>
@@ -191,10 +132,8 @@ export default function StudentDashboard() {
             <CardContent className="flex items-center p-6">
               <Trophy className="h-8 w-8 text-yellow-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Temas Completados</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {topics.filter(t => t.progress?.preClassComplete && t.progress?.liveClassAttended && t.progress?.afterClassComplete).length}
-                </p>
+                <p className="text-sm font-medium text-gray-600">Temas Disponibles</p>
+                <p className="text-2xl font-bold text-gray-900">{topics.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -204,105 +143,60 @@ export default function StudentDashboard() {
               <Calendar className="h-8 w-8 text-green-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Próxima Clase</p>
-                <p className="text-sm font-bold text-gray-900">
-                  Por agendar
-                </p>
+                <p className="text-sm font-bold text-gray-900">Por agendar</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Learning Content */}
-        <div className="space-y-8">
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center text-orange-900">
-                  <Calendar className="h-5 w-5 mr-2 text-orange-600" />
-                  Agendar Clase
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-orange-700 mb-4">
-                  Programa tu próxima clase en vivo con nuestros profesores nativos
-                </p>
-                <Button 
-                  className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700"
-                  onClick={() => router.push('/student/book')}
-                >
-                  Agendar Ahora
+        {/* Spanish Topics */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-4 w-4 text-white" />
+              </div>
+              Contenido de Español Disponible
+            </CardTitle>
+            <p className="text-gray-600">
+              Explora los {topics.length} temas de español organizados por nivel CEFR
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {topics.slice(0, 9).map((topic) => (
+                <Card key={topic.id} className="border-l-4 border-orange-500 hover:shadow-md transition-all">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Badge variant="outline" className="text-orange-700 border-orange-300">
+                        {topic.level}
+                      </Badge>
+                      <span className="text-sm text-gray-500">#{topic.orderIndex}</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">{topic.name}</h3>
+                    {topic.tema && (
+                      <p className="text-sm text-gray-600 mb-2">Tema: {topic.tema}</p>
+                    )}
+                    {topic.vocabulario && (
+                      <p className="text-sm text-gray-600 mb-3">Vocabulario: {topic.vocabulario}</p>
+                    )}
+                    <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700">
+                      Explorar Tema
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {topics.length > 9 && (
+              <div className="mt-6 text-center">
+                <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
+                  Ver todos los {topics.length} temas
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center text-blue-900">
-                  <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-                  Estudiar Contenido
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-blue-700 mb-4">
-                  Accede a actividades pre-clase y post-clase para reforzar tu aprendizaje
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
-                  onClick={() => router.push('/student/learning')}
-                >
-                  Comenzar a Estudiar
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
-              <CardHeader>
-                <CardTitle className="flex items-center text-green-900">
-                  <Trophy className="h-5 w-5 mr-2 text-green-600" />
-                  Mi Progreso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-green-700 mb-4">
-                  Revisa tu progreso y logros en el aprendizaje del español
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full border-green-300 text-green-700 hover:bg-green-50"
-                  onClick={() => router.push('/student/progress')}
-                >
-                  Ver Progreso
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Spanish Learning Content */}
-          <Card className="bg-white">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="h-4 w-4 text-white" />
-                </div>
-                Contenido de Español por Niveles
-              </CardTitle>
-              <p className="text-gray-600">
-                Explora las lecciones organizadas por nivel CEFR y progresa a tu ritmo
-              </p>
-            </CardHeader>
-            <CardContent>
-              <SpanishLevelTabs
-                topics={topics}
-                currentUserLevel={session?.user?.level as any}
-                onStartLesson={handleStartLesson}
-                onViewClassroom={handleViewClassroom}
-                onBookClass={handleBookClass}
-              />
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
