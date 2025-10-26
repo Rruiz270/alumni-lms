@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import SpanishLevelTabs from '@/components/spanish/SpanishLevelTabs'
 import { 
   Calendar, 
   BookOpen, 
@@ -149,52 +150,81 @@ export default function SimpleStudentDashboard() {
           </Card>
         </div>
 
-        {/* Spanish Topics */}
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center text-orange-900">
+                <Calendar className="h-5 w-5 mr-2 text-orange-600" />
+                Agendar Clase
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-orange-700 mb-4">
+                Programa tu próxima clase en vivo con nuestros profesores nativos
+              </p>
+              <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700">
+                Agendar Ahora
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center text-blue-900">
+                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                Estudiar Contenido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-blue-700 mb-4">
+                Accede a actividades pre-clase y post-clase para reforzar tu aprendizaje
+              </p>
+              <Button variant="outline" className="w-full border-blue-300 text-blue-700 hover:bg-blue-50">
+                Comenzar a Estudiar
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-lg transition-all duration-300 cursor-pointer">
+            <CardHeader>
+              <CardTitle className="flex items-center text-green-900">
+                <Trophy className="h-5 w-5 mr-2 text-green-600" />
+                Mi Progreso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-green-700 mb-4">
+                Revisa tu progreso y logros en el aprendizaje del español
+              </p>
+              <Button variant="outline" className="w-full border-green-300 text-green-700 hover:bg-green-50">
+                Ver Progreso
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Spanish Learning Content */}
         <Card className="bg-white">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
                 <BookOpen className="h-4 w-4 text-white" />
               </div>
-              Contenido de Español Disponible
+              Contenido de Español por Niveles
             </CardTitle>
             <p className="text-gray-600">
-              Explora los {topics.length} temas de español organizados por nivel CEFR
+              Explora las lecciones organizadas por nivel CEFR y progresa a tu ritmo
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topics.slice(0, 9).map((topic) => (
-                <Card key={topic.id} className="border-l-4 border-orange-500 hover:shadow-md transition-all">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline" className="text-orange-700 border-orange-300">
-                        {topic.level}
-                      </Badge>
-                      <span className="text-sm text-gray-500">#{topic.orderIndex}</span>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">{topic.name}</h3>
-                    {topic.tema && (
-                      <p className="text-sm text-gray-600 mb-2">Tema: {topic.tema}</p>
-                    )}
-                    {topic.vocabulario && (
-                      <p className="text-sm text-gray-600 mb-3">Vocabulario: {topic.vocabulario}</p>
-                    )}
-                    <Button size="sm" className="w-full bg-orange-600 hover:bg-orange-700">
-                      Explorar Tema
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            
-            {topics.length > 9 && (
-              <div className="mt-6 text-center">
-                <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-                  Ver todos los {topics.length} temas
-                </Button>
-              </div>
-            )}
+            <SpanishLevelTabs
+              topics={topics}
+              currentUserLevel="A1"
+              onStartLesson={(topicId) => console.log('Start lesson:', topicId)}
+              onViewClassroom={(link) => window.open(link, '_blank')}
+              onBookClass={(topicId) => console.log('Book class:', topicId)}
+            />
           </CardContent>
         </Card>
       </div>
