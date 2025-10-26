@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { directPrisma as prisma } from '@/lib/direct-prisma'
 import { google } from 'googleapis'
 
 // Google Sheets configuration
