@@ -65,17 +65,43 @@ export default function SimpleStudentDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  ¡Bienvenido a Alumni by Better!
+                </h1>
+                <p className="text-gray-600">
+                  Tu plataforma de aprendizaje de español
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                ¡Bienvenido a Alumni by Better!
-              </h1>
-              <p className="text-gray-600">
-                Tu plataforma de aprendizaje de español
-              </p>
+            
+            {/* Role Navigation */}
+            <div className="flex gap-2">
+              <Button 
+                variant="default" 
+                className="bg-orange-600 text-white hover:bg-orange-700"
+              >
+                👨‍🎓 Estudiante
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                onClick={() => window.location.href = '/teacher'}
+              >
+                👩‍🏫 Profesor
+              </Button>
+              <Button 
+                variant="outline" 
+                className="border-purple-600 text-purple-600 hover:bg-purple-50"
+                onClick={() => window.location.href = '/admin'}
+              >
+                👑 Admin
+              </Button>
             </div>
           </div>
           
