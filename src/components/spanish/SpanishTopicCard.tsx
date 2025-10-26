@@ -177,7 +177,7 @@ export default function SpanishTopicCard({
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
           <Button 
-            onClick={() => window.location.href = `/student/exercise/${topic.id}`}
+            onClick={() => window.location.href = `/student/study/${topic.id}`}
             className="bg-gradient-to-r from-orange-600 to-red-600 text-white hover:from-orange-700 hover:to-red-700"
           >
             <BookOpen className="h-4 w-4 mr-2" />

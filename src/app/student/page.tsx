@@ -35,15 +35,19 @@ export default function SimpleStudentDashboard() {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://alumni-backend-production-2546.up.railway.app'
-        const response = await fetch(`${apiUrl}/api/topics`)
+        // Use public API endpoint that doesn't require authentication
+        const response = await fetch('/api/topics/public')
         
         if (response.ok) {
           const data = await response.json()
-          setTopics(data || [])
+          console.log('Topics fetched:', data)
+          setTopics(data.topics || [])
+        } else {
+          console.error('Failed to fetch topics:', response.status, response.statusText)
         }
       } catch (error) {
         console.error('Error fetching topics:', error)
+        setTopics([])
       } finally {
         setLoading(false)
       }

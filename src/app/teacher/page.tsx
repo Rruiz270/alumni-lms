@@ -36,12 +36,11 @@ export default function TeacherDashboard() {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://alumni-backend-production-2546.up.railway.app'
-        const response = await fetch(`${apiUrl}/api/topics`)
+        const response = await fetch('/api/topics/public')
         
         if (response.ok) {
           const data = await response.json()
-          setTopics(data || [])
+          setTopics(data.topics || [])
         }
       } catch (error) {
         console.error('Error fetching topics:', error)
@@ -313,6 +312,99 @@ export default function TeacherDashboard() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Teaching Materials - All Topics */}
+        <Card className="bg-white mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-4 w-4 text-white" />
+              </div>
+              Contenido para Enseñar - Google Classroom
+            </CardTitle>
+            <p className="text-gray-600">
+              Todos los temas disponibles con materiales de Google Classroom ({topics.length} temas)
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {topics.slice(0, 12).map((topic) => {
+                const getLevelColor = (level: string) => {
+                  switch (level) {
+                    case 'A1': return 'bg-green-100 text-green-800 border-green-200'
+                    case 'A2': return 'bg-blue-100 text-blue-800 border-blue-200'
+                    case 'B1': return 'bg-orange-100 text-orange-800 border-orange-200'
+                    case 'B2': return 'bg-red-100 text-red-800 border-red-200'
+                    default: return 'bg-gray-100 text-gray-800 border-gray-200'
+                  }
+                }
+
+                return (
+                  <Card key={topic.id} className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-300">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Badge className={getLevelColor(topic.level)}>
+                            {topic.level}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Lección {topic.orderIndex}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm leading-tight">
+                        {topic.name}
+                      </h3>
+                      
+                      {topic.tema && (
+                        <p className="text-xs text-gray-600 mb-2">
+                          <span className="font-medium">Tema:</span> {topic.tema}
+                        </p>
+                      )}
+                      
+                      {topic.recursoGramatical && (
+                        <p className="text-xs text-gray-600 mb-3">
+                          <span className="font-medium">Gramática:</span> {topic.recursoGramatical}
+                        </p>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm"
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-xs"
+                          onClick={() => window.location.href = `/teacher/teach/${topic.id}`}
+                        >
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          Enseñar
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-50 text-xs"
+                          onClick={() => topic.classroomLink && window.open(topic.classroomLink, '_blank')}
+                        >
+                          <FileText className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+            
+            {topics.length > 12 && (
+              <div className="text-center mt-6">
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/teacher/all-topics'}
+                >
+                  Ver Todos los {topics.length} Temas
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
