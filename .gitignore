@@ -33,6 +33,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Google Service Account credentials (never commit these!)
+google-service-account.json
+*service-account*.json
+test-google-auth.js
+
 # vercel
 .vercel
 
