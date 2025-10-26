@@ -53,31 +53,40 @@ export default function StudentDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [packageResponse, topicsResponse] = await Promise.all([
-          fetch('/api/student/package'),
-          fetch('/api/topics')
-        ])
-
-        if (packageResponse.ok) {
-          const packageData = await packageResponse.json()
-          setPackageInfo(packageData.package)
-        }
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://alumni-backend-production-2546.up.railway.app'
+        
+        // For now, let's fetch topics and create mock package data
+        const topicsResponse = await fetch(`${apiUrl}/api/topics`)
 
         if (topicsResponse.ok) {
           const topicsData = await topicsResponse.json()
-          setTopics(topicsData.topics || [])
+          setTopics(topicsData || [])
         }
+
+        // Mock package data for now
+        setPackageInfo({
+          totalLessons: 80,
+          usedLessons: 12,
+          remainingLessons: 68,
+          validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        })
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
+        // Set empty data on error
+        setTopics([])
+        setPackageInfo({
+          totalLessons: 80,
+          usedLessons: 0,
+          remainingLessons: 80,
+          validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    if (session?.user?.id) {
-      fetchDashboardData()
-    }
-  }, [session?.user?.id])
+    fetchDashboardData()
+  }, [])
 
   const handleStartLesson = (topicId: string) => {
     router.push(`/student/learning/${topicId}`)
