@@ -50,6 +50,17 @@ export class GoogleClassroomContentExtractor {
         }
       }
 
+      // Try method 1b: Base64 encoded JSON (for Vercel compatibility)
+      if (!serviceAccountKey && process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64) {
+        try {
+          const base64Decoded = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf8')
+          serviceAccountKey = JSON.parse(base64Decoded)
+          console.log('✓ Using Base64 encoded service account key')
+        } catch (error) {
+          console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY_BASE64:', error)
+        }
+      }
+
       // Method 2: Reconstruct from individual environment variables (fallback)
       if (!serviceAccountKey && process.env.GOOGLE_PROJECT_ID) {
         serviceAccountKey = {
