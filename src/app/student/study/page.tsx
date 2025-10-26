@@ -17,7 +17,8 @@ import {
   Video,
   MessageCircle,
   Target,
-  Award
+  Award,
+  Calendar
 } from 'lucide-react'
 
 interface Exercise {
@@ -297,8 +298,8 @@ export default function StudyContent() {
                         <Button 
                           className={exercise.completed ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}
                           onClick={() => {
-                            // Here you would navigate to the exercise
-                            console.log('Starting exercise:', exercise.id)
+                            // Navigate to exercise session for this topic
+                            window.location.href = `/student/exercise/${selectedTopic}`
                           }}
                         >
                           {exercise.completed ? (
