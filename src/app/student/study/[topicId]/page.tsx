@@ -96,32 +96,73 @@ export default function StudentStudyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => router.push('/student')}
+            onClick={() => router.push('/student/study')}
             className="mb-4 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver al Dashboard
           </Button>
           
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-              <BookOpen className="h-6 w-6 text-white" />
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg mb-4">
+              <BookOpen className="h-8 w-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Área de Estudio
-              </h1>
-              <p className="text-gray-600">
-                Completa todas las actividades para dominar este tema
-              </p>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Área de Estudio
+            </h1>
+            <p className="text-gray-600">
+              Completa todas las actividades para dominar este tema
+            </p>
           </div>
         </div>
+
+        {/* Topic Information Card */}
+        <Card className="mb-6">
+          <CardHeader className="text-center pb-4">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                topic.level === 'A1' ? 'bg-green-100 text-green-800' :
+                topic.level === 'A2' ? 'bg-blue-100 text-blue-800' :
+                topic.level === 'B1' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                Nivel {topic.level}
+              </span>
+              <span className="text-sm text-gray-500">Lección {topic.orderIndex}</span>
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              {topic.name}
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent className="grid md:grid-cols-3 gap-4 text-center">
+            {topic.tema && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-1">Tema:</h3>
+                <p className="text-sm text-gray-600">{topic.tema}</p>
+              </div>
+            )}
+            
+            {topic.vocabulario && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-1">Vocabulario:</h3>
+                <p className="text-sm text-gray-600">{topic.vocabulario}</p>
+              </div>
+            )}
+            
+            {topic.recursoGramatical && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-1">Gramática:</h3>
+                <p className="text-sm text-gray-600">{topic.recursoGramatical}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Google Classroom Viewer */}
         <GoogleClassroomViewer

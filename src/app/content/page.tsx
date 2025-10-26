@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, BookOpen, Play } from 'lucide-react'
+import { ArrowLeft, BookOpen, Play, Users } from 'lucide-react'
 
 interface SpanishTopic {
   id: string
@@ -18,11 +18,11 @@ interface SpanishTopic {
   orderIndex: number
 }
 
-export default function StudentStudyIndex() {
+export default function AllContentPage() {
   const router = useRouter()
   const [topics, setTopics] = useState<SpanishTopic[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedLevel, setSelectedLevel] = useState<string>('A1')
+  const [selectedLevel, setSelectedLevel] = useState<string>('ALL')
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -42,117 +42,68 @@ export default function StudentStudyIndex() {
     fetchTopics()
   }, [])
 
-  const filteredTopics = topics.filter(topic => topic.level === selectedLevel)
-  const levels = ['A1', 'A2', 'B1', 'B2']
+  const filteredTopics = selectedLevel === 'ALL' 
+    ? topics 
+    : topics.filter(topic => topic.level === selectedLevel)
+
+  const levels = ['ALL', 'A1', 'A2', 'B1', 'B2']
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-red-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="text-lg">Cargando contenido...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => router.push('/student')}
+            onClick={() => router.back()}
             className="mb-4 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al Dashboard
+            Volver
           </Button>
           
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center h-16 w-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg mb-4">
-              <BookOpen className="h-8 w-8 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+              <BookOpen className="h-6 w-6 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Estudiar Contenido
-            </h1>
-            <p className="text-gray-600">
-              Accede a actividades pre-clase y post-clase para reforzar tu aprendizaje
-            </p>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Todo el Contenido
+              </h1>
+              <p className="text-gray-600">
+                Todos los temas disponibles con materiales de Google Classroom ({topics.length} temas)
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Level Filter */}
         <div className="mb-6">
-          <div className="flex justify-center gap-2">
+          <div className="flex gap-2">
             {levels.map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
                 onClick={() => setSelectedLevel(level)}
-                className={selectedLevel === level ? "bg-orange-600 hover:bg-orange-700" : "border-orange-600 text-orange-600 hover:bg-orange-50"}
+                className="min-w-16"
               >
-                Nivel {level}
+                {level === 'ALL' ? 'Todos' : level}
               </Button>
             ))}
           </div>
         </div>
 
-        {/* Content Info */}
-        <Card className="mb-6 bg-blue-50 border-blue-200">
-          <CardContent className="text-center p-6">
-            <BookOpen className="h-8 w-8 mx-auto text-blue-600 mb-3" />
-            <h2 className="text-xl font-semibold text-blue-900 mb-2">
-              Estudiar Contenido
-            </h2>
-            <p className="text-blue-800">
-              Accede a actividades pre-clase y post-clase para reforzar tu aprendizaje
-            </p>
-            <div className="mt-4">
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => router.push('/content')}
-              >
-                Comenzar a Estudiar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Progress Overview */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="text-center p-6">
-              <div className="text-3xl font-bold text-green-600 mb-2">67%</div>
-              <div className="text-sm text-gray-600">Fase 1 - Preparación Pre-Clase</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div className="bg-green-600 h-2 rounded-full" style={{ width: '67%' }}></div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="text-center p-6">
-              <div className="text-3xl font-bold text-gray-400 mb-2">0%</div>
-              <div className="text-sm text-gray-600">Fase 2 - Clase en Vivo</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div className="bg-gray-400 h-2 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="text-center p-6">
-              <div className="text-3xl font-bold text-gray-400 mb-2">0%</div>
-              <div className="text-sm text-gray-600">Fase 3 - Actividades Post-Clase</div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div className="bg-gray-400 h-2 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Topics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredTopics.slice(0, 6).map((topic, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTopics.map((topic, index) => (
             <Card key={topic.id} className="hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -193,14 +144,23 @@ export default function StudentStudyIndex() {
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="flex gap-2 pt-2">
                   <Button 
                     size="sm" 
-                    className="w-full bg-orange-600 hover:bg-orange-700"
+                    className="flex-1"
                     onClick={() => router.push(`/student/study/${topic.id}`)}
                   >
                     <Play className="h-4 w-4 mr-1" />
                     Estudiar
+                  </Button>
+                  
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => router.push(`/teacher/teach/${topic.id}`)}
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    Enseñar
                   </Button>
                 </div>
               </CardContent>
@@ -212,19 +172,7 @@ export default function StudentStudyIndex() {
           <div className="text-center py-12">
             <BookOpen className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay contenido disponible</h3>
-            <p className="text-gray-600">No se encontraron temas para el nivel {selectedLevel}.</p>
-          </div>
-        )}
-
-        {filteredTopics.length > 6 && (
-          <div className="text-center mt-6">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push('/content')}
-              className="border-orange-600 text-orange-600 hover:bg-orange-50"
-            >
-              Ver Todos los {filteredTopics.length} Temas del Nivel {selectedLevel}
-            </Button>
+            <p className="text-gray-600">No se encontraron temas para el nivel seleccionado.</p>
           </div>
         )}
       </div>
