@@ -38,8 +38,7 @@ export async function GET(request: NextRequest) {
         objetivoImplicito: true,
         classroomLink: true,
         objectives: true,
-        materials: true,
-        createdAt: true
+        materials: true
       }
     })
 
