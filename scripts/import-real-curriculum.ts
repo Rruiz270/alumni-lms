@@ -11,10 +11,10 @@ const SHEET_ID = '1ezRurCziI_hcHg3Shs5Hg3wAU_Cgdia_3p89LXncyKg'
 
 // Define the 4 levels as tabs in the spreadsheet
 const LEVEL_TABS = [
-  { level: 'A1', gid: '383437245' },
-  { level: 'A2', gid: '1234567890' }, // Replace with actual GID
-  { level: 'B1', gid: '2345678901' }, // Replace with actual GID  
-  { level: 'B2', gid: '3456789012' }  // Replace with actual GID
+  { level: 'A1', sheetName: 'ÍNDICE A1', gid: '0' },
+  { level: 'A2', sheetName: 'INDICE A2', gid: '244320901' },
+  { level: 'B1', sheetName: 'INDICE B1', gid: '1195930769' },
+  { level: 'B2', sheetName: 'INDICE B2', gid: '383437245' }
 ]
 
 interface SpreadsheetRow {
@@ -45,12 +45,12 @@ async function getGoogleSheetsAuth() {
   }
 }
 
-async function fetchSheetData(auth: any, level: string, gid: string): Promise<SpreadsheetRow[]> {
+async function fetchSheetData(auth: any, level: string, sheetName: string): Promise<SpreadsheetRow[]> {
   try {
     const sheets = google.sheets({ version: 'v4', auth })
     
-    // Fetch data from specific tab (using gid or sheet name)
-    const range = `${level}!A2:F` // Assuming columns A-F contain the data
+    // Fetch data from specific tab using sheet name
+    const range = `'${sheetName}'!A2:F` // Assuming columns A-F contain the data
     
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -94,7 +94,7 @@ async function importRealCurriculum() {
     for (const levelTab of LEVEL_TABS) {
       console.log(`📚 Importing ${levelTab.level} level...`)
       
-      const sheetData = await fetchSheetData(auth, levelTab.level, levelTab.gid)
+      const sheetData = await fetchSheetData(auth, levelTab.level, levelTab.sheetName)
       console.log(`Found ${sheetData.length} topics for level ${levelTab.level}`)
       
       // Import topics for this level
@@ -172,7 +172,7 @@ async function generateBasicExercises() {
           title: `Práctica: ${topic.name}`,
           phase: 'AFTER_CLASS',
           category: 'GRAMMAR',
-          type: 'FILL_BLANKS',
+          type: 'GAP_FILL',
           instructions: `Practica lo aprendido en la clase sobre: ${topic.name}`,
           content: {
             text: `Completa la frase relacionada con ${topic.vocabulario || 'el vocabulario de la clase'}: Hoy aprendí sobre ____`,
