@@ -110,8 +110,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
+    console.log('Session in admin/users POST:', session)
+    
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.log('No session or email found')
+      return NextResponse.json({ error: 'Unauthorized - Please log in as admin' }, { status: 401 })
     }
 
     // Check if user is admin
@@ -120,7 +123,10 @@ export async function POST(request: NextRequest) {
       select: { role: true }
     })
 
+    console.log('Admin user check:', adminUser)
+
     if (adminUser?.role !== 'ADMIN') {
+      console.log('User is not admin. Role:', adminUser?.role)
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
