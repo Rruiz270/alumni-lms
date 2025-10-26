@@ -35,31 +35,11 @@ interface SpreadsheetRow {
   classroomLink: string
 }
 
-// Google Sheets API authentication
+// Google Sheets API authentication using the full JSON key
 async function getGoogleSheetsAuth() {
   try {
-    let serviceAccountKey;
-    
-    if (process.env.GOOGLE_PROJECT_ID && process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-      // Build service account key from individual environment variables
-      const privateKey = process.env.GOOGLE_PRIVATE_KEY
-        .replace(/\\n/g, '\n') // Replace escaped newlines
-        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-        .replace(/-----BEGIN PRIVATE KEY----- /g, '-----BEGIN PRIVATE KEY-----\n') // Fix header
-        .replace(/ -----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----') // Fix footer
-        .trim()
-      
-      serviceAccountKey = {
-        type: 'service_account',
-        project_id: process.env.GOOGLE_PROJECT_ID,
-        private_key_id: '4f3a1dae249a1421b9ffce8309bd93939ebaefc7',
-        private_key: privateKey,
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        client_id: '115410300277316663550'
-      } as any
-    } else {
-      throw new Error('Missing Google Sheets API credentials. Please set GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, and GOOGLE_PRIVATE_KEY environment variables.')
-    }
+    // Use the full JSON service account key from environment variable
+    const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY!)
     
     const auth = new google.auth.GoogleAuth({
       credentials: serviceAccountKey,
@@ -76,8 +56,7 @@ async function fetchSheetData(auth: any, level: string, sheetName: string): Prom
   try {
     const sheets = google.sheets({ version: 'v4', auth })
     
-    // Fetch data from specific tab using sheet name
-    const range = `'${sheetName}'!A2:F` // Assuming columns A-F contain the data
+    const range = `'${sheetName}'!A2:F`
     
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -93,7 +72,7 @@ async function fetchSheetData(auth: any, level: string, sheetName: string): Prom
       theme: row[3] || '',
       implicitObjective: row[4] || '',
       classroomLink: row[5] || ''
-    })).filter(row => row.topic.trim() !== '') // Filter out empty rows
+    })).filter(row => row.topic.trim() !== '')
     
   } catch (error) {
     console.error(`Error fetching data for level ${level}:`, error)
