@@ -1,4 +1,3 @@
-import nodemailer from 'nodemailer';
 import { db } from '../prisma';
 import { EmailTemplate } from './templates/types';
 import { WelcomeTemplate } from './templates/WelcomeTemplate';
@@ -85,35 +84,50 @@ export interface ProgressData {
 }
 
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: any;
   private analytics: EmailAnalytics;
   private queue: EmailQueue;
   private defaultLanguage: 'en' | 'es' = 'es';
 
   constructor() {
-    this.initializeTransporter();
+    this.transporter = null;
     this.analytics = new EmailAnalytics();
     this.queue = new EmailQueue();
   }
 
-  private initializeTransporter() {
-    const config: EmailConfig = {
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER || '',
-        pass: process.env.SMTP_PASS || '',
-      },
-    };
+  private async initializeTransporter() {
+    if (!this.transporter) {
+      try {
+        const nodemailer = await import('nodemailer');
+        const config: EmailConfig = {
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: false,
+          auth: {
+            user: process.env.SMTP_USER || '',
+            pass: process.env.SMTP_PASS || '',
+          },
+        };
 
-    this.transporter = nodemailer.createTransporter(config);
+        this.transporter = nodemailer.default.createTransporter(config);
+      } catch (error) {
+        console.error('Failed to initialize email transporter:', error);
+        throw new Error('Email service not available');
+      }
+    }
   }
 
   /**
    * Send email with tracking and analytics
    */
   async sendEmail(options: EmailOptions): Promise<boolean> {
+    try {
+      await this.initializeTransporter();
+    } catch (error) {
+      console.log('Email service not available, skipping notification');
+      return false;
+    }
+
     try {
       const trackingId = options.trackingId || this.generateTrackingId();
       
@@ -584,6 +598,7 @@ export class EmailService {
    */
   async testEmailConfiguration(): Promise<boolean> {
     try {
+      await this.initializeTransporter();
       await this.transporter.verify();
       console.log('Email configuration is valid');
       return true;
