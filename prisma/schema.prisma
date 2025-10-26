@@ -57,6 +57,8 @@ model User {
   accounts        Account[]
   contentProgress ContentProgress[]
   alumni          Alumni?
+  analytics       StudentAnalytics?
+  learningGoals   LearningGoal[]
 }
 
 model Alumni {
@@ -133,6 +135,7 @@ model Booking {
   
   // Relations
   attendanceLogs  AttendanceLog[]
+  classAnalytics  ClassAnalytics?
 }
 
 model Availability {
@@ -145,6 +148,8 @@ model Availability {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  @@unique([teacherId, dayOfWeek, startTime], name: "teacherId_dayOfWeek_startTime")
 }
 
 model Exercise {
@@ -366,4 +371,422 @@ model ContentProgress {
   @@index([userId])
   @@index([contentId])
   @@index([userId, completed])
+}
+
+// ============================================================================
+// ANALYTICS AND PROGRESS TRACKING MODELS
+// ============================================================================
+
+enum SkillArea {
+  READING
+  WRITING
+  LISTENING
+  SPEAKING
+  GRAMMAR
+  VOCABULARY
+  PRONUNCIATION
+  CONVERSATION
+}
+
+enum BadgeType {
+  MILESTONE
+  STREAK
+  SKILL_MASTERY
+  ATTENDANCE
+  ACHIEVEMENT
+  SPECIAL
+}
+
+enum BadgeCategory {
+  PROGRESS
+  CONSISTENCY
+  EXCELLENCE
+  PARTICIPATION
+  SOCIAL
+  SPECIAL_EVENT
+}
+
+enum RecommendationType {
+  EXERCISE
+  TOPIC
+  SKILL_PRACTICE
+  CLASS_BOOKING
+  STUDY_PLAN
+  DIFFICULTY_ADJUSTMENT
+}
+
+// Comprehensive student analytics and progress tracking
+model StudentAnalytics {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Overall Progress
+  currentLevel          Level?
+  levelProgress         Float    @default(0) // Percentage progress within current level
+  nextLevelAt           DateTime? // Estimated date to reach next level
+  totalStudyTime        Int      @default(0) // Total minutes studied
+  avgDailyStudyTime     Int      @default(0) // Average minutes per day
+  
+  // Learning Streaks
+  currentStreak         Int      @default(0) // Days
+  longestStreak         Int      @default(0) // Days
+  lastStudyDate         DateTime?
+  
+  // Performance Metrics
+  avgExerciseScore      Float    @default(0) // Average percentage score
+  totalExercisesCompleted Int    @default(0)
+  totalTopicsCompleted  Int      @default(0)
+  
+  // Attendance Metrics
+  totalClassesBooked    Int      @default(0)
+  totalClassesAttended  Int      @default(0)
+  attendanceRate        Float    @default(0) // Percentage
+  totalNoShows          Int      @default(0)
+  
+  // Engagement Metrics
+  loginCount            Int      @default(0)
+  lastLoginAt           DateTime?
+  avgSessionDuration    Int      @default(0) // Minutes
+  
+  // Learning Velocity
+  topicsPerWeek         Float    @default(0)
+  exercisesPerDay       Float    @default(0)
+  improvementRate       Float    @default(0) // Performance improvement over time
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  skillProgress         SkillProgress[]
+  achievements          Achievement[]
+  learningStreaks       LearningStreak[]
+  studySessions         StudySession[]
+  recommendations       Recommendation[]
+  weeklyReports         WeeklyReport[]
+  
+  @@index([userId])
+  @@index([currentLevel])
+  @@index([lastStudyDate])
+}
+
+// Track progress in specific skill areas
+model SkillProgress {
+  id                String         @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  skillArea         SkillArea
+  level             Level
+  
+  // Progress Metrics
+  masteryPercentage Float          @default(0) // 0-100
+  exercisesCompleted Int           @default(0)
+  avgScore          Float          @default(0)
+  timeSpent         Int            @default(0) // Minutes
+  
+  // Skill-specific metrics
+  strongTopics      Json           @default("[]") // Array of topic IDs where student excels
+  weakTopics        Json           @default("[]") // Array of topic IDs needing improvement
+  lastPracticed     DateTime?
+  
+  // Trend Analysis
+  improvementTrend  Float          @default(0) // Positive/negative trend
+  consistencyScore  Float          @default(0) // How consistently they practice this skill
+  
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  @@unique([analyticsId, skillArea, level])
+  @@index([userId, skillArea])
+  @@index([masteryPercentage])
+}
+
+// Achievement and badge system
+model Badge {
+  id                String         @id @default(cuid())
+  name              String
+  description       String
+  icon              String         // Icon name or emoji
+  type              BadgeType
+  category          BadgeCategory
+  
+  // Requirements
+  requirements      Json           // Flexible criteria for earning the badge
+  points            Int            @default(0) // Points awarded for earning this badge
+  rarity            String         @default("common") // common, rare, epic, legendary
+  
+  // Visual Design
+  color             String         @default("#3B82F6")
+  bgColor           String         @default("#EFF6FF")
+  
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  achievements      Achievement[]
+  
+  @@index([type, category])
+  @@index([isActive])
+}
+
+model Achievement {
+  id                String           @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  badgeId           String
+  badge             Badge            @relation(fields: [badgeId], references: [id])
+  
+  earnedAt          DateTime         @default(now())
+  progress          Float            @default(100) // Progress towards earning (for partial achievements)
+  isVisible         Boolean          @default(true)
+  
+  // Context when earned
+  context           Json?            // Additional data about when/how it was earned
+  
+  @@unique([analyticsId, badgeId])
+  @@index([userId])
+  @@index([earnedAt])
+}
+
+// Track learning streaks in detail
+model LearningStreak {
+  id                String           @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  startDate         DateTime
+  endDate           DateTime?
+  length            Int              // Days
+  isActive          Boolean          @default(true)
+  
+  // Streak details
+  activities        Json             @default("[]") // Array of daily activities
+  avgDailyTime      Int              @default(0) // Average minutes per day
+  totalTime         Int              @default(0) // Total minutes in streak
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([userId, isActive])
+  @@index([length])
+  @@index([startDate, endDate])
+}
+
+// Individual study session tracking
+model StudySession {
+  id                String           @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int              @default(0) // Minutes
+  
+  // Session activities
+  activitiesCompleted Json          @default("[]") // Array of completed activities
+  topicsStudied     Json            @default("[]") // Array of topic IDs
+  exercisesCompleted Int            @default(0)
+  avgScore          Float           @default(0)
+  
+  // Session type
+  sessionType       String          // "exercise", "class", "content", "mixed"
+  isCompleted       Boolean         @default(false)
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@index([userId])
+  @@index([startTime])
+  @@index([sessionType])
+}
+
+// AI-powered recommendations
+model Recommendation {
+  id                String           @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  type              RecommendationType
+  title             String
+  description       String
+  
+  // Recommendation content
+  targetId          String?          // ID of recommended exercise, topic, etc.
+  targetType        String?          // "exercise", "topic", "skill", etc.
+  priority          Int              @default(1) // 1-10, higher = more important
+  confidence        Float            @default(0.5) // AI confidence in recommendation
+  
+  // Reasoning
+  reason            String           // Why this was recommended
+  expectedBenefit   String?          // What improvement is expected
+  
+  // Status
+  isActive          Boolean          @default(true)
+  isCompleted       Boolean          @default(false)
+  viewedAt          DateTime?
+  completedAt       DateTime?
+  
+  // Effectiveness tracking
+  effectiveness     Float?           // How effective was this recommendation (0-1)
+  userFeedback      String?          // User's feedback on the recommendation
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([userId, isActive])
+  @@index([type, priority])
+  @@index([createdAt])
+}
+
+// Weekly progress reports
+model WeeklyReport {
+  id                String           @id @default(cuid())
+  userId            String
+  analyticsId       String
+  analytics         StudentAnalytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+  
+  weekStartDate     DateTime
+  weekEndDate       DateTime
+  
+  // Week summary
+  studyTime         Int              @default(0) // Minutes
+  exercisesCompleted Int             @default(0)
+  avgScore          Float            @default(0)
+  classesAttended   Int              @default(0)
+  
+  // Progress metrics
+  skillsImproved    Json             @default("[]") // Array of skills that improved
+  achievementsEarned Json           @default("[]") // Array of achievement IDs
+  streakDays        Int              @default(0)
+  
+  // Insights
+  topStrengths      Json             @default("[]") // Top performing areas
+  improvementAreas  Json             @default("[]") // Areas needing work
+  recommendations   Json             @default("[]") // Weekly recommendations
+  
+  // Goals
+  weeklyGoals       Json             @default("[]") // Goals set for the week
+  goalsAchieved     Int              @default(0)
+  goalSuccess       Float            @default(0) // Percentage of goals achieved
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@unique([analyticsId, weekStartDate])
+  @@index([userId])
+  @@index([weekStartDate])
+}
+
+// Class-level analytics for teachers
+model ClassAnalytics {
+  id                String           @id @default(cuid())
+  bookingId         String           @unique
+  booking           Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  teacherId         String
+  
+  // Class metrics
+  preparationTime   Int              @default(0) // Minutes teacher spent preparing
+  actualDuration    Int              @default(60) // Actual class duration
+  studentEngagement Float            @default(0) // 1-10 engagement score
+  
+  // Content covered
+  topicsCovered     Json             @default("[]") // Topics covered in class
+  exercisesUsed     Json             @default("[]") // Exercises used
+  studentQuestions  Int              @default(0) // Number of questions asked
+  
+  // Effectiveness
+  teacherRating     Float?           // Student rating of teacher (1-5)
+  classRating       Float?           // Student rating of class (1-5)
+  learningObjectivesMet Boolean       @default(false)
+  
+  // Post-class metrics
+  homeworkAssigned  Boolean          @default(false)
+  followUpNeeded    Boolean          @default(false)
+  notes             String?
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([teacherId])
+  @@index([studentEngagement])
+  @@index([createdAt])
+}
+
+// Platform-wide analytics for admins
+model PlatformAnalytics {
+  id                String           @id @default(cuid())
+  date              DateTime         @unique @default(now())
+  
+  // User metrics
+  totalUsers        Int              @default(0)
+  activeUsers       Int              @default(0) // Users active in last 7 days
+  newRegistrations  Int              @default(0)
+  userRetention     Float            @default(0) // 7-day retention rate
+  
+  // Content metrics
+  totalExercises    Int              @default(0)
+  exercisesCompleted Int             @default(0)
+  avgExerciseScore  Float            @default(0)
+  contentEngagement Float            @default(0)
+  
+  // Class metrics
+  totalClasses      Int              @default(0)
+  classesCompleted  Int              @default(0)
+  avgClassRating    Float            @default(0)
+  noShowRate        Float            @default(0)
+  
+  // Performance metrics
+  avgLoadTime       Float            @default(0) // Average page load time
+  errorRate         Float            @default(0) // Error rate percentage
+  serverUptime      Float            @default(100) // Uptime percentage
+  
+  // Business metrics
+  revenue           Float            @default(0)
+  newSubscriptions  Int              @default(0)
+  churnRate         Float            @default(0)
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([date])
+}
+
+// Learning goals and targets
+model LearningGoal {
+  id                String           @id @default(cuid())
+  userId            String
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title             String
+  description       String?
+  targetType        String           // "level", "skill", "topic", "custom"
+  targetValue       String           // Target level, skill percentage, etc.
+  
+  // Timeline
+  startDate         DateTime         @default(now())
+  targetDate        DateTime
+  completedAt       DateTime?
+  
+  // Progress tracking
+  currentProgress   Float            @default(0) // Percentage towards goal
+  isCompleted       Boolean          @default(false)
+  isActive          Boolean          @default(true)
+  
+  // Motivation
+  priority          Int              @default(1) // 1-10
+  reason            String?          // Why this goal is important
+  reward            String?          // Self-reward for completing
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  @@index([userId, isActive])
+  @@index([targetDate])
+  @@index([isCompleted])
 }
