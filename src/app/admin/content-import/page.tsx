@@ -124,7 +124,7 @@ export default function ContentImportPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-gray-600">
-            Import all 20 topics with their slides, videos, and audio files from Google Classroom 
+            Import all 184 topics with their slides, videos, and audio files from Google Classroom 
             into your local database. This will make your application completely independent.
           </p>
           

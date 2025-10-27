@@ -31,37 +31,15 @@ async function getGoogleSheetsAuth() {
   try {
     let serviceAccountKey;
     
-    if (process.env.GOOGLE_PROJECT_ID && process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
-      // Build service account key from individual environment variables
-      const privateKey = process.env.GOOGLE_PRIVATE_KEY
-        .replace(/\\n/g, '\n') // Replace escaped newlines
-        .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-        .replace(/-----BEGIN PRIVATE KEY----- /g, '-----BEGIN PRIVATE KEY-----\n') // Fix header
-        .replace(/ -----END PRIVATE KEY-----/g, '\n-----END PRIVATE KEY-----') // Fix footer
-        .trim()
-      
-      serviceAccountKey = {
-        type: 'service_account',
-        project_id: process.env.GOOGLE_PROJECT_ID,
-        private_key_id: '4f3a1dae249a1421b9ffce8309bd93939ebaefc7',
-        private_key: privateKey,
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        client_id: '115410300277316663550',
-        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-        token_uri: 'https://oauth2.googleapis.com/token',
-        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_CLIENT_EMAIL)}`,
-        universe_domain: 'googleapis.com'
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      try {
+        serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
+      } catch (error) {
+        console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', error)
+        throw error
       }
-    } else if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64) {
-      // Decode Base64 encoded key
-      const decoded = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_BASE64, 'base64').toString('utf-8')
-      serviceAccountKey = JSON.parse(decoded)
-    } else if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-      // Direct JSON key
-      serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
     } else {
-      throw new Error('Missing Google Sheets API credentials. Please set GOOGLE_PROJECT_ID, GOOGLE_CLIENT_EMAIL, and GOOGLE_PRIVATE_KEY environment variables.')
+      throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not found in environment')
     }
     
     const auth = new google.auth.GoogleAuth({
@@ -90,13 +68,13 @@ async function fetchSheetData(auth: any, level: string, sheetName: string): Prom
     const rows = response.data.values || []
     
     return rows.map((row: any[]) => ({
-      topic: row[0] || '',
-      grammarResource: row[1] || '',
-      vocabulary: row[2] || '',
-      theme: row[3] || '',
-      implicitObjective: row[4] || '',
-      classroomLink: row[5] || ''
-    })).filter(row => row.topic.trim() !== '') // Filter out empty rows
+      grammarResource: row[0] || '',    // RECURSO GRAMATICAL
+      vocabulary: row[1] || '',         // VOCABULÁRIO  
+      theme: row[2] || '',              // TEMAS
+      implicitObjective: row[3] || '',  // OBJETIVO IMPLICITO
+      classroomLink: row[4] || '',      // ÚLTIMA VERSÃO CLASSROOM
+      topic: `${row[0] || ''} - ${row[2] || ''}`.trim() // Create topic name from grammar + theme
+    })).filter(row => row.grammarResource.trim() !== '' && row.grammarResource !== 'RECURSO GRAMATICAL') // Filter out empty rows and header
     
   } catch (error) {
     console.error(`Error fetching data for level ${level}:`, error)
