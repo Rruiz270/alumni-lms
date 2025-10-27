@@ -59,6 +59,7 @@ model User {
   alumni          Alumni?
   analytics       StudentAnalytics?
   learningGoals   LearningGoal[]
+  slideInteractions SlideInteraction[]
 }
 
 model Alumni {
@@ -113,6 +114,8 @@ model Topic {
   liveClassSlides Slide[]
   progress        Progress[]
   contents        Content[]
+  presentations   Presentation[]
+  contentSlides   ContentSlide[]
 }
 
 model Booking {
@@ -789,4 +792,291 @@ model LearningGoal {
   @@index([userId, isActive])
   @@index([targetDate])
   @@index([isCompleted])
+}
+
+// =====================================
+// CONTENT MANAGEMENT SYSTEM TABLES
+// =====================================
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  NEEDS_REVIEW
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  SLIDE
+}
+
+// Store imported Google Classroom presentations
+model Presentation {
+  id                String      @id @default(cuid())
+  topicId           String?
+  topic             Topic?      @relation(fields: [topicId], references: [id])
+  
+  // Presentation metadata
+  title             String
+  description       String?
+  originalGoogleId  String?     // Original Google Slides ID
+  originalUrl       String?     // Original Google Classroom URL
+  
+  // Content structure
+  totalSlides       Int         @default(0)
+  estimatedDuration Int         @default(0) // Minutes
+  level             Level?
+  
+  // Status and versioning
+  status            ContentStatus @default(DRAFT)
+  version           String      @default("1.0")
+  isTemplate        Boolean     @default(false)
+  
+  // Import metadata
+  importedAt        DateTime?
+  lastSyncAt        DateTime?
+  importSource      String?     // "google_classroom", "manual", "bulk_import"
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  // Relations
+  slides            ContentSlide[]
+  media             MediaFile[]
+  versions          PresentationVersion[]
+  
+  @@index([topicId])
+  @@index([status])
+  @@index([level])
+  @@index([originalGoogleId])
+}
+
+// Individual slides within presentations
+model ContentSlide {
+  id                String       @id @default(cuid())
+  presentationId    String
+  presentation      Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+  topicId           String?
+  topic             Topic?       @relation(fields: [topicId], references: [id])
+  
+  // Slide content
+  title             String?
+  content           Json         // Slide content (text, layout, elements)
+  slideNumber       Int
+  notes             String?      // Speaker notes
+  
+  // Visual content
+  thumbnailUrl      String?
+  imageUrl          String?      // High-res slide image
+  backgroundColor   String?
+  layout            String?      // slide layout type
+  
+  // Embedded content
+  hasVideo          Boolean      @default(false)
+  hasAudio          Boolean      @default(false)
+  hasInteractive    Boolean      @default(false)
+  
+  // Google Slides specific
+  originalSlideId   String?      // Original Google Slide object ID
+  googleEmbedUrl    String?
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  // Relations
+  media             MediaFile[]
+  interactions      SlideInteraction[]
+  
+  @@index([presentationId, slideNumber])
+  @@index([topicId])
+  @@index([hasVideo, hasAudio])
+}
+
+// Store all media files (images, videos, audio)
+model MediaFile {
+  id                String       @id @default(cuid())
+  presentationId    String?
+  presentation      Presentation? @relation(fields: [presentationId], references: [id])
+  slideId           String?
+  slide             ContentSlide? @relation(fields: [slideId], references: [id])
+  
+  // File metadata
+  filename          String
+  originalFilename  String?
+  fileType          MediaType
+  mimeType          String
+  fileSize          Int          // Bytes
+  duration          Int?         // Seconds (for video/audio)
+  
+  // Storage locations
+  localPath         String?      // Local file path
+  cloudUrl          String?      // Cloud storage URL
+  thumbnailUrl      String?      // Thumbnail for videos/images
+  
+  // Media properties
+  width             Int?         // For images/videos
+  height            Int?         // For images/videos
+  quality           String?      // "high", "medium", "low"
+  
+  // Source information
+  originalUrl       String?      // Original Google/YouTube URL
+  youtubeId         String?      // YouTube video ID
+  googleFileId      String?      // Google Drive file ID
+  
+  // Content metadata
+  title             String?
+  description       String?
+  transcript        String?      // Auto-generated transcript for audio/video
+  altText           String?      // Alt text for images
+  
+  // Processing status
+  isProcessed       Boolean      @default(false)
+  processingStatus  String?      // "pending", "processing", "completed", "error"
+  processingError   String?
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  @@index([presentationId])
+  @@index([slideId])
+  @@index([fileType])
+  @@index([youtubeId])
+  @@index([isProcessed])
+}
+
+// Track interactions and analytics for slides
+model SlideInteraction {
+  id                String       @id @default(cuid())
+  slideId           String
+  slide             ContentSlide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  userId            String?
+  user              User?        @relation(fields: [userId], references: [id])
+  
+  // Interaction data
+  interactionType   String       // "view", "play_video", "play_audio", "click", "time_spent"
+  duration          Int?         // Seconds spent on slide
+  timestamp         DateTime     @default(now())
+  
+  // Context
+  sessionId         String?      // Study session or class session
+  classroomContext  Boolean      @default(false) // Was this during a live class?
+  
+  // Metadata
+  metadata          Json?        // Additional interaction data
+  
+  @@index([slideId, userId])
+  @@index([interactionType])
+  @@index([timestamp])
+}
+
+// Version control for presentations
+model PresentationVersion {
+  id                String       @id @default(cuid())
+  presentationId    String
+  presentation      Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+  
+  // Version metadata
+  versionNumber     String
+  changeDescription String?
+  changedBy         String?      // User ID who made changes
+  
+  // Snapshot data
+  snapshotData      Json         // Complete presentation data at this version
+  
+  // Status
+  isActive          Boolean      @default(false)
+  
+  createdAt         DateTime     @default(now())
+  
+  @@index([presentationId, versionNumber])
+  @@index([isActive])
+}
+
+// Import/Export jobs tracking
+model ContentImportJob {
+  id                String       @id @default(cuid())
+  
+  // Job metadata
+  jobType           String       // "bulk_import", "single_topic", "manual_import"
+  status            String       // "pending", "running", "completed", "failed"
+  source            String       // "google_classroom", "google_drive", "manual"
+  
+  // Job parameters
+  sourceUrls        Json         @default("[]") // Array of URLs to import
+  targetTopicIds    Json         @default("[]") // Array of topic IDs
+  importSettings    Json         @default("{}")  // Import configuration
+  
+  // Progress tracking
+  totalItems        Int          @default(0)
+  processedItems    Int          @default(0)
+  successfulItems   Int          @default(0)
+  failedItems       Int          @default(0)
+  
+  // Results
+  importedIds       Json         @default("[]") // Array of created presentation IDs
+  errorLog          Json         @default("[]") // Array of errors
+  summary           Json?        // Job summary and statistics
+  
+  // Timing
+  startedAt         DateTime?
+  completedAt       DateTime?
+  estimatedFinish   DateTime?
+  
+  // User context
+  initiatedBy       String?      // User ID who started the job
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  @@index([status])
+  @@index([jobType])
+  @@index([createdAt])
+}
+
+// Content export jobs (for deploying to new Google Classroom)
+model ContentExportJob {
+  id                String       @id @default(cuid())
+  
+  // Export metadata
+  jobType           String       // "create_classroom", "update_classroom", "export_presentation"
+  status            String       // "pending", "running", "completed", "failed"
+  destination       String       // "google_classroom", "google_drive", "pdf"
+  
+  // Export parameters
+  presentationIds   Json         @default("[]") // Presentations to export
+  topicIds          Json         @default("[]") // Topics to export
+  exportSettings    Json         @default("{}")  // Export configuration
+  
+  // Destination info
+  targetClassroomId String?      // Google Classroom ID
+  targetFolderId    String?      // Google Drive folder ID
+  targetUrls        Json         @default("[]") // Created URLs
+  
+  // Progress tracking
+  totalItems        Int          @default(0)
+  processedItems    Int          @default(0)
+  successfulItems   Int          @default(0)
+  failedItems       Int          @default(0)
+  
+  // Results
+  exportedUrls      Json         @default("[]") // Array of created URLs
+  errorLog          Json         @default("[]") // Array of errors
+  summary           Json?        // Export summary
+  
+  // Timing
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  // User context
+  initiatedBy       String?      // User ID who started the export
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  @@index([status])
+  @@index([jobType])
+  @@index([createdAt])
 }
