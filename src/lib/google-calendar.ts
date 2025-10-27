@@ -62,16 +62,21 @@ export interface UpdateEventParams {
 export class GoogleCalendarService {
   private calendar;
   private auth;
+  private isEnabled: boolean = false;
 
   constructor() {
-    this.auth = new google.auth.GoogleAuth({
-      credentials: this.parseServiceAccountKey(),
-      scopes: [
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/calendar.events',
-      ],
-    });
-    this.calendar = google.calendar({ version: 'v3', auth: this.auth });
+    const credentials = this.parseServiceAccountKey();
+    if (credentials) {
+      this.auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: [
+          'https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events',
+        ],
+      });
+      this.calendar = google.calendar({ version: 'v3', auth: this.auth });
+      this.isEnabled = true;
+    }
   }
 
   /**
@@ -81,14 +86,16 @@ export class GoogleCalendarService {
     try {
       const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
       if (!key) {
-        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+        console.warn('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set. Google Calendar features will be disabled.');
+        return null;
       }
       // Remove any extra whitespace and line breaks that might have been introduced
       const cleanKey = key.replace(/\s+/g, ' ').trim();
       return JSON.parse(cleanKey);
     } catch (error) {
       console.error('Error parsing Google Service Account Key:', error);
-      throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format. Please ensure it is valid JSON.');
+      console.warn('Google Calendar features will be disabled due to invalid credentials.');
+      return null;
     }
   }
 
@@ -100,6 +107,15 @@ export class GoogleCalendarService {
     meetLink: string;
     htmlLink: string;
   }> {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Skipping event creation.');
+      return {
+        eventId: `mock-${booking.id}`,
+        meetLink: `https://meet.google.com/mock-${booking.id}`,
+        htmlLink: ''
+      };
+    }
+    
     try {
       const startTime = new Date(booking.scheduledAt);
       const endTime = new Date(startTime.getTime() + (booking.duration * 60 * 1000));
@@ -190,6 +206,15 @@ export class GoogleCalendarService {
     meetLink: string;
     htmlLink: string;
   }> {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Skipping event update.');
+      return {
+        eventId: eventId,
+        meetLink: booking.googleMeetLink || `https://meet.google.com/mock-${booking.id}`,
+        htmlLink: ''
+      };
+    }
+    
     try {
       const startTime = new Date(booking.scheduledAt);
       const endTime = new Date(startTime.getTime() + (booking.duration * 60 * 1000));
@@ -246,6 +271,11 @@ export class GoogleCalendarService {
    * Cancel a calendar event
    */
   async cancelEvent(eventId: string): Promise<void> {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Skipping event cancellation.');
+      return;
+    }
+    
     try {
       await this.calendar.events.delete({
         calendarId: 'primary',
@@ -262,6 +292,11 @@ export class GoogleCalendarService {
    * Get calendar event details
    */
   async getEvent(eventId: string) {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Returning mock event data.');
+      return null;
+    }
+    
     try {
       const response = await this.calendar.events.get({
         calendarId: 'primary',
@@ -282,6 +317,11 @@ export class GoogleCalendarService {
     startTime: Date,
     endTime: Date
   ): Promise<boolean> {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Assuming slot is available.');
+      return true; // Assume available when service is disabled
+    }
+    
     try {
       const response = await this.calendar.freebusy.query({
         requestBody: {
@@ -307,6 +347,11 @@ export class GoogleCalendarService {
     startDate: Date,
     endDate: Date
   ): Promise<Array<{ start: string; end: string }>> {
+    if (!this.isEnabled) {
+      console.warn('Google Calendar service is disabled. Returning empty busy times.');
+      return [];
+    }
+    
     try {
       const response = await this.calendar.freebusy.query({
         requestBody: {

@@ -44,14 +44,16 @@ export class GoogleClassroomContentExtractor {
     try {
       const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
       if (!key) {
-        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+        console.warn('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+        return null;
       }
       // Remove any extra whitespace and line breaks that might have been introduced
       const cleanKey = key.replace(/\s+/g, ' ').trim();
       return JSON.parse(cleanKey);
     } catch (error) {
       console.error('Error parsing Google Service Account Key:', error);
-      throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format. Please ensure it is valid JSON.');
+      console.warn('Google Classroom features will be disabled due to invalid credentials.');
+      return null;
     }
   }
 
