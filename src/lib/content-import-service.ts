@@ -1,4 +1,4 @@
-import { prisma } from './prisma'
+import { directPrisma as prisma } from './direct-prisma'
 import { GoogleClassroomContentExtractor } from './google-classroom-content'
 import { google } from 'googleapis'
 import fs from 'fs/promises'

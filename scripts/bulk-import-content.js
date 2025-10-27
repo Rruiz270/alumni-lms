@@ -1,4 +1,5 @@
-const { contentImportService } = require('../src/lib/content-import-service')
+// Import with proper ES module syntax
+import { contentImportService } from '../src/lib/content-import-service.js'
 
 async function runBulkImport() {
   console.log('🚀 Starting bulk content import from Google Classroom...')

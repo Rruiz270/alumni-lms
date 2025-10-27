@@ -17,7 +17,8 @@ import {
   Database,
   Bell,
   LogOut,
-  Home
+  Home,
+  Upload
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -50,6 +51,12 @@ const navigation = [
     href: '/admin/content',
     icon: BookOpen,
     description: 'Manage Spanish topics and exercises'
+  },
+  {
+    name: 'Content Import',
+    href: '/admin/content-import',
+    icon: Upload,
+    description: 'Import content from Google Classroom'
   },
   {
     name: 'Analytics',
