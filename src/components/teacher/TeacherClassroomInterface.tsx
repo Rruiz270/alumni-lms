@@ -16,7 +16,6 @@ import {
   Target,
   CheckCircle2,
   Users,
-  Screen,
   Share,
   Monitor,
   Mic,
@@ -352,7 +351,7 @@ export default function TeacherClassroomInterface({
                           onClick={() => window.open(getPresentUrl(topic.classroomLink!), '_blank')}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          <Screen className="h-4 w-4 mr-2" />
+                          <Monitor className="h-4 w-4 mr-2" />
                           Modo Presentación
                         </Button>
                         <Button 

@@ -65,13 +65,31 @@ export class GoogleCalendarService {
 
   constructor() {
     this.auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}'),
+      credentials: this.parseServiceAccountKey(),
       scopes: [
         'https://www.googleapis.com/auth/calendar',
         'https://www.googleapis.com/auth/calendar.events',
       ],
     });
     this.calendar = google.calendar({ version: 'v3', auth: this.auth });
+  }
+
+  /**
+   * Safely parse the Google Service Account Key from environment variable
+   */
+  private parseServiceAccountKey() {
+    try {
+      const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      if (!key) {
+        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+      }
+      // Remove any extra whitespace and line breaks that might have been introduced
+      const cleanKey = key.replace(/\s+/g, ' ').trim();
+      return JSON.parse(cleanKey);
+    } catch (error) {
+      console.error('Error parsing Google Service Account Key:', error);
+      throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format. Please ensure it is valid JSON.');
+    }
   }
 
   /**

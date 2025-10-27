@@ -37,6 +37,24 @@ export class GoogleClassroomContentExtractor {
     this.initAuth()
   }
 
+  /**
+   * Safely parse the Google Service Account Key from environment variable
+   */
+  private parseServiceAccountKey() {
+    try {
+      const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      if (!key) {
+        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set');
+      }
+      // Remove any extra whitespace and line breaks that might have been introduced
+      const cleanKey = key.replace(/\s+/g, ' ').trim();
+      return JSON.parse(cleanKey);
+    } catch (error) {
+      console.error('Error parsing Google Service Account Key:', error);
+      throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format. Please ensure it is valid JSON.');
+    }
+  }
+
   private async initAuth() {
     try {
       let serviceAccountKey: any
@@ -44,7 +62,7 @@ export class GoogleClassroomContentExtractor {
       // Try method 1: Single JSON environment variable (recommended)
       if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
         try {
-          serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
+          serviceAccountKey = this.parseServiceAccountKey()
         } catch (error) {
           console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', error)
         }
