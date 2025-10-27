@@ -37,9 +37,13 @@ export async function GET(
       )
     }
 
-    // Extract content from the classroom link
+    // Extract content from the classroom link with topic context
     const extractor = new GoogleClassroomContentExtractor()
-    const content = await extractor.extractClassroomContent(topic.classroomLink)
+    const content = await extractor.extractClassroomContent(
+      topic.classroomLink, 
+      topic.name, 
+      topic.level
+    )
 
     // Enrich content with topic-specific information
     const enrichedContent = {
