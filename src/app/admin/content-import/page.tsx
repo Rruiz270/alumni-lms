@@ -68,6 +68,49 @@ export default function ContentImportPage() {
     }
   }
 
+  const startResumeImport = async () => {
+    setIsImporting(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/admin/content/resume-import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          batchSize: 5,
+          delayBetweenBatches: 3000,
+          maxRetries: 3,
+          skipExisting: true
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Resume import failed: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      
+      setCurrentJob({
+        jobId: result.jobId,
+        status: 'running',
+        totalItems: 98, // We know there are 98 remaining
+        processedItems: 0,
+        successfulItems: 0,
+        failedItems: 0,
+        errors: []
+      })
+
+      // Start polling for status using the resume import endpoint
+      pollResumeJobStatus(result.jobId)
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      setIsImporting(false)
+    }
+  }
+
   const pollJobStatus = async (jobId: string) => {
     try {
       const response = await fetch(`/api/admin/content/import?jobId=${jobId}`)
@@ -84,6 +127,26 @@ export default function ContentImportPage() {
       
     } catch (err) {
       console.error('Failed to get job status:', err)
+      setIsImporting(false)
+    }
+  }
+
+  const pollResumeJobStatus = async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/admin/content/resume-import?jobId=${jobId}`)
+      const status = await response.json()
+      
+      setCurrentJob(status)
+      
+      if (status.status === 'completed' || status.status === 'failed') {
+        setIsImporting(false)
+      } else if (status.status === 'running' || status.status === 'pending') {
+        // Continue polling
+        setTimeout(() => pollResumeJobStatus(jobId), 3000)
+      }
+      
+    } catch (err) {
+      console.error('Failed to get resume job status:', err)
       setIsImporting(false)
     }
   }
@@ -128,30 +191,53 @@ export default function ContentImportPage() {
             into your local database. This will make your application completely independent.
           </p>
           
-          <div className="flex items-center space-x-4">
-            <Button 
-              onClick={startBulkImport}
-              disabled={isImporting}
-              className="flex items-center space-x-2"
-            >
-              {isImporting ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              <span>
-                {isImporting ? 'Importing...' : 'Start Bulk Import'}
-              </span>
-            </Button>
-            
-            {currentJob && (
-              <div className="flex items-center space-x-2">
-                {getStatusIcon(currentJob.status)}
-                <span className={`text-sm font-medium ${getStatusColor(currentJob.status)}`}>
-                  {currentJob.status.toUpperCase()}
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-4">
+              <Button 
+                onClick={startBulkImport}
+                disabled={isImporting}
+                className="flex items-center space-x-2"
+              >
+                {isImporting ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                <span>
+                  {isImporting ? 'Importing...' : 'Start Bulk Import'}
                 </span>
-              </div>
-            )}
+              </Button>
+
+              <Button 
+                onClick={startResumeImport}
+                disabled={isImporting}
+                variant="outline"
+                className="flex items-center space-x-2 border-green-600 text-green-600 hover:bg-green-50"
+              >
+                {isImporting ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span>
+                  Resume Import (98 remaining)
+                </span>
+              </Button>
+              
+              {currentJob && (
+                <div className="flex items-center space-x-2">
+                  {getStatusIcon(currentJob.status)}
+                  <span className={`text-sm font-medium ${getStatusColor(currentJob.status)}`}>
+                    {currentJob.status.toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="text-sm text-gray-500">
+              <strong>Bulk Import:</strong> Import all topics from scratch (may timeout with large datasets)<br/>
+              <strong>Resume Import:</strong> Continue importing remaining 98 topics with better error handling
+            </div>
           </div>
 
           {error && (
