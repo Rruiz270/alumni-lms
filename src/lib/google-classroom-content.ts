@@ -165,6 +165,95 @@ export class GoogleClassroomContentExtractor {
     }
   }
 
+  // Extract YouTube videos from Google Slides presentation
+  async extractYouTubeVideosFromSlides(presentationId: string): Promise<VideoContent[]> {
+    if (!this.auth) {
+      console.warn('Google auth not available, skipping YouTube video extraction')
+      return []
+    }
+    
+    try {
+      const slides = google.slides({ version: 'v1', auth: this.auth })
+      
+      const presentation = await slides.presentations.get({
+        presentationId: presentationId
+      })
+
+      const videos: VideoContent[] = []
+
+      if (presentation.data.slides) {
+        for (const slide of presentation.data.slides) {
+          if (slide.pageElements) {
+            for (const element of slide.pageElements) {
+              // Check for video elements
+              if (element.video) {
+                const video = element.video
+                if (video.url) {
+                  const videoId = this.extractYouTubeVideoId(video.url)
+                  if (videoId) {
+                    videos.push({
+                      id: videoId,
+                      title: video.properties?.outline?.outlineFill?.solidFill?.color?.rgbColor ? 
+                        `Video from Slide ${videos.length + 1}` : 
+                        `Video ${videos.length + 1}`,
+                      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                      embedUrl: `https://www.youtube.com/embed/${videoId}`,
+                      duration: 'Unknown'
+                    })
+                  }
+                }
+              }
+              
+              // Check for shapes or text that might contain YouTube links
+              if (element.shape?.text?.textElements) {
+                for (const textElement of element.shape.text.textElements) {
+                  if (textElement.textRun?.content) {
+                    const youtubeUrls = this.extractYouTubeUrls(textElement.textRun.content)
+                    for (const url of youtubeUrls) {
+                      const videoId = this.extractYouTubeVideoId(url)
+                      if (videoId && !videos.find(v => v.id === videoId)) {
+                        videos.push({
+                          id: videoId,
+                          title: `YouTube Video ${videos.length + 1}`,
+                          thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+                          embedUrl: `https://www.youtube.com/embed/${videoId}`,
+                          duration: 'Unknown'
+                        })
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return videos
+    } catch (error) {
+      console.error('Error extracting YouTube videos from slides:', error)
+      return []
+    }
+  }
+
+  // Helper method to extract YouTube video ID from URL
+  private extractYouTubeVideoId(url: string): string | null {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+    const match = url.match(regex)
+    return match ? match[1] : null
+  }
+
+  // Helper method to extract YouTube URLs from text
+  private extractYouTubeUrls(text: string): string[] {
+    const regex = /(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/(watch\?v=|embed\/|v\/)?([a-zA-Z0-9_-]{11})/g
+    const matches = []
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      matches.push(match[0])
+    }
+    return matches
+  }
+
   // Get content from Google Drive folder
   async getFolderContent(folderId: string): Promise<{ videos: VideoContent[], documents: DocumentContent[] }> {
     try {
@@ -221,13 +310,16 @@ export class GoogleClassroomContentExtractor {
       const presentationId = this.extractPresentationId(classroomLink)
       if (presentationId) {
         content.slides = await this.getSlidesContent(presentationId)
+        // Extract YouTube videos embedded in the slides
+        const youtubeVideos = await this.extractYouTubeVideosFromSlides(presentationId)
+        content.videos = [...content.videos, ...youtubeVideos]
       }
 
       // Check if it's a Google Drive folder
       const folderId = this.extractFolderId(classroomLink)
       if (folderId) {
         const folderContent = await this.getFolderContent(folderId)
-        content.videos = folderContent.videos
+        content.videos = [...content.videos, ...folderContent.videos]
         content.documents = folderContent.documents
       }
 
